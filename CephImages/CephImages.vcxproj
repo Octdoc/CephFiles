@@ -152,10 +152,25 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="application.cpp" />
+    <ClCompile Include="common.cpp" />
+    <ClCompile Include="folderfiles.cpp" />
+    <ClCompile Include="imageview.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="textview.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application.h" />
+    <ClInclude Include="common.h" />
+    <ClInclude Include="folderfiles.h" />
+    <ClInclude Include="imageview.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="textview.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="CephImages.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="cephimage.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
