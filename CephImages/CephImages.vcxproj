@@ -156,6 +156,7 @@
     <ClCompile Include="folderfiles.cpp" />
     <ClCompile Include="imageview.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="settingsfile.cpp" />
     <ClCompile Include="textview.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +165,7 @@
     <ClInclude Include="folderfiles.h" />
     <ClInclude Include="imageview.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="settingsfile.h" />
     <ClInclude Include="textview.h" />
   </ItemGroup>
   <ItemGroup>

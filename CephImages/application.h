@@ -3,6 +3,7 @@
 #include "imageview.h"
 #include "textview.h"
 #include "folderfiles.h"
+#include "settingsfile.h"
 
 namespace cephimages
 {
@@ -22,6 +23,7 @@ namespace cephimages
 		std::unique_ptr<ImageView> m_image;
 		std::unique_ptr<TextView> m_text;
 		std::unique_ptr<FolderFiles> m_folderFiles;
+		SettingsFile m_settings;
 
 	private:
 		void InitWindow();
@@ -30,6 +32,7 @@ namespace cephimages
 
 		void Redraw();
 
+		void CloseWindow();
 		void Resize(unsigned width, unsigned height);
 		void Paint();
 		void MouseMove(int x, int y, bool btnDown);
@@ -52,7 +55,7 @@ namespace cephimages
 
 	public:
 		Application();
-		void Init(const std::wstring& name, unsigned width, unsigned height);
+		void Init(const std::wstring& name, int width, int height);
 		void Run();
 
 		LRESULT MessageHandler(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);

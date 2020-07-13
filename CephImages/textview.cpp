@@ -4,7 +4,7 @@ namespace cephimages
 {
 	TextView::TextView(ID2D1RenderTarget* renderTarget, IDWriteFactory* factory, IDWriteTextFormat* format, const std::wstring& text)
 	{
-		ThrowIfFailed(factory->CreateTextLayout(text.c_str(), text.length(), format, 0, 0, &m_text));
+		ThrowIfFailed(factory->CreateTextLayout(text.c_str(), static_cast<UINT32>(text.length()), format, 0, 0, &m_text));
 		m_text->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 	}
 	void TextView::Draw(ID2D1RenderTarget* renderTarget, ID2D1Brush* brush, D2D1_SIZE_F windowSize)

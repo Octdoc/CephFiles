@@ -2,6 +2,7 @@
 #include "resource.h"
 #include <windowsx.h>
 #include <sstream>
+#include <fstream>
 
 namespace cephimages
 {
@@ -26,6 +27,7 @@ namespace cephimages
 		DWORD style = WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU | WS_THICKFRAME;
 		DWORD exStyle = WS_EX_APPWINDOW | WS_EX_ACCEPTFILES;
 		AdjustWindowRectEx(&rect, style, false, exStyle);
+
 		m_mainWindow = CreateWindowEx(
 			exStyle, wc.lpszClassName, m_windowName.c_str(), style,
 			CW_USEDEFAULT, CW_USEDEFAULT,
@@ -48,6 +50,11 @@ namespace cephimages
 	{
 		InvalidateRect(m_mainWindow, nullptr, false);
 	}
+	void Application::CloseWindow()
+	{
+		m_settings.StoreWindowPlacement(m_mainWindow);
+		DestroyWindow(m_mainWindow);
+	}
 	void Application::Resize(unsigned width, unsigned height)
 	{
 		m_windowSize.width = static_cast<float>(width);
@@ -57,7 +64,7 @@ namespace cephimages
 	void Application::Paint()
 	{
 		m_renderTarget->BeginDraw();
-		m_renderTarget->Clear(D2D1::ColorF(0.2f, 0.2f, 0.25f));
+		m_renderTarget->Clear(m_settings.BackgroundColor());
 
 		if (m_image)
 			m_image->Draw(m_renderTarget.Get(), m_windowSize);
@@ -152,6 +159,8 @@ namespace cephimages
 	{
 		try
 		{
+			m_text.reset();
+			m_image.reset();
 			m_image = std::make_unique<ImageView>(m_renderTarget.Get(), filename);
 		}
 		catch (const std::exception& e)
@@ -161,7 +170,7 @@ namespace cephimages
 				std::string errMsg(e.what());
 				CreateText(std::wstring(errMsg.begin(), errMsg.end()));
 			}
-			catch (const std::exception& e)
+			catch (const std::exception&)
 			{
 				PostQuitMessage(0);
 			}
@@ -206,7 +215,7 @@ namespace cephimages
 		m_mainWindow(nullptr),
 		m_windowSize{ 0.0f, 0.0f },
 		m_prevCursor{ 0, 0 } {}
-	void Application::Init(const std::wstring& name, unsigned width, unsigned height)
+	void Application::Init(const std::wstring& name, int width, int height)
 	{
 		m_windowName = name;
 		m_windowSize.width = static_cast<float>(width);
@@ -225,7 +234,7 @@ namespace cephimages
 		SetWindowLongPtr(m_mainWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(wndProc));
 
 		if (m_mainWindow)
-			ShowWindow(m_mainWindow, SW_SHOWDEFAULT);
+			m_settings.ApplyWindowPlacement(m_mainWindow);
 	}
 	void Application::Run()
 	{
@@ -240,6 +249,9 @@ namespace cephimages
 	{
 		switch (msg)
 		{
+		case WM_CLOSE:
+			CloseWindow();
+			return 0;
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			return 0;
