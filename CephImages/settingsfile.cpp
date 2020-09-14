@@ -27,6 +27,7 @@ namespace cephimages
 		os << "bg_g: " << static_cast<int>(m_backgroundColor.g * 255.0f) << std::endl;
 		os << "bg_b: " << static_cast<int>(m_backgroundColor.b * 255.0f) << std::endl;
 		os << "fill_mode: " << static_cast<int>(m_fillMode) << std::endl;
+		os << "interpolate: " << static_cast<int>(m_interpolate) << std::endl;
 	}
 	SettingsFile::SettingsFile()
 	{
@@ -69,6 +70,7 @@ namespace cephimages
 		m_showCmd = SW_NORMAL;
 		m_backgroundColor = D2D1::ColorF(0.2f, 0.2f, 0.25f);
 		m_fillMode = ImageView::FillMode::Fit;
+		m_interpolate = true;
 	}
 	void SettingsFile::Load()
 	{
@@ -125,6 +127,11 @@ namespace cephimages
 						m_fillMode = ImageView::FillMode::Fit;
 						break;
 					}
+				}
+				else if (key == L"interpolate:")
+				{
+					infile >> numBuffer;
+					m_interpolate = static_cast<bool>(numBuffer);
 				}
 			}
 			m_windowRect.right = m_windowRect.left + width;

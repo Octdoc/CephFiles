@@ -9,6 +9,7 @@ enum : UINT_PTR
 	RCM_FIT = 100,
 	RCM_FILL,
 	RCM_ONETOONE,
+	RCM_INTERPOLATE,
 	RCM_DELETE,
 	RCM_SETWALLPAPER
 };
@@ -49,6 +50,8 @@ namespace cephimages
 		AppendMenu(m_rightClickMenu, MF_STRING, RCM_FIT, L"Fit image");
 		AppendMenu(m_rightClickMenu, MF_STRING, RCM_FILL, L"Fill window");
 		AppendMenu(m_rightClickMenu, MF_STRING, RCM_ONETOONE, L"Original size");
+		AppendMenu(m_rightClickMenu, MF_SEPARATOR, 0, nullptr);
+		AppendMenu(m_rightClickMenu, MF_STRING, RCM_INTERPOLATE, L"Interpolate");
 		AppendMenu(m_rightClickMenu, MF_SEPARATOR, 0, nullptr);
 		AppendMenu(m_rightClickMenu, MF_STRING, RCM_DELETE, L"Delete");
 		AppendMenu(m_rightClickMenu, MF_STRING, RCM_SETWALLPAPER, L"Set as wallpaper");
@@ -124,6 +127,9 @@ namespace cephimages
 			}
 			Redraw();
 			break;
+		case RCM_INTERPOLATE:
+			ChangeInterpolation();
+			break;
 		case RCM_DELETE:
 			RemoveCurrentImage();
 			break;
@@ -131,6 +137,16 @@ namespace cephimages
 			if (m_image)
 				SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (PVOID)m_folderFiles->CurrentFileName().c_str(), SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
 			break;
+		}
+	}
+	void Application::ChangeInterpolation()
+	{
+		bool interpolate = !m_settings.Interpolate();
+		m_settings.Interpolate(interpolate);
+		if (m_image)
+		{
+			m_image->SetInterpolation(interpolate);
+			Redraw();
 		}
 	}
 	void Application::RightButtonUp(int x, int y)
@@ -142,7 +158,13 @@ namespace cephimages
 		EnableMenuItem(m_rightClickMenu, RCM_ONETOONE, !m_image);
 		EnableMenuItem(m_rightClickMenu, RCM_DELETE, !m_image);
 		EnableMenuItem(m_rightClickMenu, RCM_SETWALLPAPER, !m_image);
+		CheckMenuItem(m_rightClickMenu, RCM_INTERPOLATE, m_settings.Interpolate() ? MF_CHECKED : MF_UNCHECKED);
 		TrackPopupMenuEx(m_rightClickMenu, 0, cursor.x, cursor.y, m_mainWindow, nullptr);
+	}
+	void Application::LeftButtonDown(int x, int y)
+	{
+		m_prevCursor.x = x;
+		m_prevCursor.y = y;
 	}
 	void Application::MouseMove(int x, int y, bool btnDown)
 	{
@@ -235,6 +257,7 @@ namespace cephimages
 			if (!m_image)
 				m_image = std::make_unique<ImageView>(m_renderTarget.Get(), filename);
 			m_image->SetFillMode(m_settings.FillMode());
+			m_image->SetInterpolation(m_settings.Interpolate());
 		}
 		catch (const std::exception& e)
 		{
@@ -338,6 +361,9 @@ namespace cephimages
 			return 0;
 		case WM_RBUTTONUP:
 			RightButtonUp(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+			return 0;
+		case WM_LBUTTONDOWN:
+			LeftButtonDown(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
 			return 0;
 		case WM_COMMAND:
 			Command(wparam);

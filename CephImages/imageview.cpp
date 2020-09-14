@@ -31,7 +31,7 @@ namespace cephimages
 		return D2D1::SizeF(
 			windowSize.width / imgSize.width,
 			windowSize.height / imgSize.height
-			);
+		);
 	}
 	D2D1_RECT_F ImageView::ImagePosition(D2D1_SIZE_F windowSize)
 	{
@@ -62,7 +62,8 @@ namespace cephimages
 	ImageView::ImageView(ID2D1RenderTarget* renderTarget, const wchar_t* filename) :
 		m_position{ 0.0f, 0.0f },
 		m_zoom(1.0f),
-		m_WindowCoord(&ImageView::WindowCoord_Fit)
+		m_WindowCoord(&ImageView::WindowCoord_Fit),
+		m_interpolation(D2D1_BITMAP_INTERPOLATION_MODE_LINEAR)
 	{
 		Load(renderTarget, filename);
 	}
@@ -87,6 +88,10 @@ namespace cephimages
 			break;
 		}
 	}
+	void ImageView::SetInterpolation(bool interpolate)
+	{
+		m_interpolation = interpolate ? D2D1_BITMAP_INTERPOLATION_MODE_LINEAR : D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
+	}
 	void ImageView::Moved(int dx, int dy, D2D1_SIZE_F windowSize)
 	{
 		D2D1_SIZE_F wndCoord = WindowCoord(windowSize);
@@ -96,16 +101,13 @@ namespace cephimages
 	void ImageView::Zoom(float zoom, D2D1_SIZE_F windowSize, D2D1_POINT_2L cursor)
 	{
 		D2D1_SIZE_F wndCoord = WindowCoord(windowSize);
-		int dx = cursor.x - static_cast<int>(windowSize.width * 0.5f);
-		int dy = cursor.y - static_cast<int>(windowSize.height * 0.5f);
-		m_position.x -= static_cast<float>(dx) * 2.0f * wndCoord.width / (windowSize.width * m_zoom);
-		m_position.y -= static_cast<float>(dy) * 2.0f * wndCoord.height / (windowSize.height * m_zoom);
 		m_zoom *= zoom;
-		m_position.x += static_cast<float>(dx) * 2.0f * wndCoord.width / (windowSize.width * m_zoom);
-		m_position.y += static_cast<float>(dy) * 2.0f * wndCoord.height / (windowSize.height * m_zoom);
+		float factor = (1.0f - zoom) / m_zoom;
+		m_position.x += (static_cast<float>(cursor.x * 2) / windowSize.width - 1.0f) * wndCoord.width * factor;
+		m_position.y += (static_cast<float>(cursor.y * 2) / windowSize.height - 1.0f) * wndCoord.height * factor;
 	}
 	void ImageView::Draw(ID2D1RenderTarget* renderTarget, D2D1_SIZE_F windowSize)
 	{
-		renderTarget->DrawBitmap(m_image.Get(), ImagePosition(windowSize), 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+		renderTarget->DrawBitmap(m_image.Get(), ImagePosition(windowSize), 1.0f, m_interpolation);
 	}
 }

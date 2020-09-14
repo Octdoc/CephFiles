@@ -14,6 +14,7 @@ namespace cephimages
 		UINT m_showCmd;
 		D2D1_COLOR_F m_backgroundColor;
 		ImageView::FillMode m_fillMode;
+		bool m_interpolate;
 
 	private:
 		void MakeSettingsFilePath();
@@ -33,5 +34,7 @@ namespace cephimages
 		inline D2D1_COLOR_F BackgroundColor() const { return m_backgroundColor; }
 		inline ImageView::FillMode FillMode() const { return m_fillMode; }
 		inline void FillMode(ImageView::FillMode fillMode) { m_fillMode = fillMode; }
+		inline bool Interpolate() const { return m_interpolate; }
+		inline void Interpolate(bool interpolate) { m_interpolate = interpolate; }
 	};
 }

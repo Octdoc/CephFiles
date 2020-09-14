@@ -38,7 +38,9 @@ namespace cephimages
 		void Resize(unsigned width, unsigned height);
 		void Paint();
 		void Command(WPARAM id);
+		void ChangeInterpolation();
 		void RightButtonUp(int x, int y);
+		void LeftButtonDown(int x, int y);
 		void MouseMove(int x, int y, bool btnDown);
 		void MouseWheel(int delta);
 		void KeyDown(WPARAM wparam);
