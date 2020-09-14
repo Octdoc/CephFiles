@@ -4,6 +4,15 @@
 #include <sstream>
 #include <fstream>
 
+enum : UINT_PTR
+{
+	RCM_FIT = 100,
+	RCM_FILL,
+	RCM_ONETOONE,
+	RCM_DELETE,
+	RCM_SETWALLPAPER
+};
+
 namespace cephimages
 {
 	void Application::InitWindow()
@@ -33,6 +42,16 @@ namespace cephimages
 			CW_USEDEFAULT, CW_USEDEFAULT,
 			rect.right - rect.left, rect.bottom - rect.top,
 			nullptr, nullptr, wc.hInstance, this);
+	}
+	void Application::CreateRightClickMenu()
+	{
+		m_rightClickMenu = CreatePopupMenu();
+		AppendMenu(m_rightClickMenu, MF_STRING, RCM_FIT, L"Fit image");
+		AppendMenu(m_rightClickMenu, MF_STRING, RCM_FILL, L"Fill window");
+		AppendMenu(m_rightClickMenu, MF_STRING, RCM_ONETOONE, L"Original size");
+		AppendMenu(m_rightClickMenu, MF_SEPARATOR, 0, nullptr);
+		AppendMenu(m_rightClickMenu, MF_STRING, RCM_DELETE, L"Delete");
+		AppendMenu(m_rightClickMenu, MF_STRING, RCM_SETWALLPAPER, L"Set as wallpaper");
 	}
 	void Application::InitDirect2D()
 	{
@@ -73,6 +92,57 @@ namespace cephimages
 
 		m_renderTarget->EndDraw();
 		ValidateRect(m_mainWindow, nullptr);
+	}
+	void Application::Command(WPARAM id)
+	{
+		switch (id)
+		{
+		case RCM_FIT:
+			if (m_image)
+			{
+				m_settings.FillMode(ImageView::FillMode::Fit);
+				m_image->SetFillMode(ImageView::FillMode::Fit);
+				m_image->ResetPosition();
+			}
+			Redraw();
+			break;
+		case RCM_FILL:
+			if (m_image)
+			{
+				m_settings.FillMode(ImageView::FillMode::Fill);
+				m_image->SetFillMode(ImageView::FillMode::Fill);
+				m_image->ResetPosition();
+			}
+			Redraw();
+			break;
+		case RCM_ONETOONE:
+			if (m_image)
+			{
+				m_settings.FillMode(ImageView::FillMode::OneToOne);
+				m_image->SetFillMode(ImageView::FillMode::OneToOne);
+				m_image->ResetPosition();
+			}
+			Redraw();
+			break;
+		case RCM_DELETE:
+			RemoveCurrentImage();
+			break;
+		case RCM_SETWALLPAPER:
+			if (m_image)
+				SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (PVOID)m_folderFiles->CurrentFileName().c_str(), SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+			break;
+		}
+	}
+	void Application::RightButtonUp(int x, int y)
+	{
+		POINT cursor;
+		GetCursorPos(&cursor);
+		EnableMenuItem(m_rightClickMenu, RCM_FIT, !m_image);
+		EnableMenuItem(m_rightClickMenu, RCM_FILL, !m_image);
+		EnableMenuItem(m_rightClickMenu, RCM_ONETOONE, !m_image);
+		EnableMenuItem(m_rightClickMenu, RCM_DELETE, !m_image);
+		EnableMenuItem(m_rightClickMenu, RCM_SETWALLPAPER, !m_image);
+		TrackPopupMenuEx(m_rightClickMenu, 0, cursor.x, cursor.y, m_mainWindow, nullptr);
 	}
 	void Application::MouseMove(int x, int y, bool btnDown)
 	{
@@ -123,6 +193,7 @@ namespace cephimages
 		Redraw();
 
 		DragFinish(drop);
+		SetForegroundWindow(m_mainWindow);
 	}
 	void Application::FolderChanged()
 	{
@@ -161,7 +232,9 @@ namespace cephimages
 		{
 			m_text.reset();
 			m_image.reset();
-			m_image = std::make_unique<ImageView>(m_renderTarget.Get(), filename);
+			if (!m_image)
+				m_image = std::make_unique<ImageView>(m_renderTarget.Get(), filename);
+			m_image->SetFillMode(m_settings.FillMode());
 		}
 		catch (const std::exception& e)
 		{
@@ -195,11 +268,14 @@ namespace cephimages
 	}
 	void Application::RemoveCurrentImage()
 	{
-		m_image.reset();
-		m_folderFiles->RemoveCurrentFile();
-		LoadImageFromFile(m_folderFiles->CurrentFileName().c_str());
-		Redraw();
-		UpdateWindowText();
+		if (m_image)
+		{
+			m_image.reset();
+			m_folderFiles->RemoveCurrentFile();
+			LoadImageFromFile(m_folderFiles->CurrentFileName().c_str());
+			Redraw();
+			UpdateWindowText();
+		}
 	}
 	void Application::LoadImageInNewFolder(const wchar_t* filename)
 	{
@@ -213,6 +289,7 @@ namespace cephimages
 	}
 	Application::Application() :
 		m_mainWindow(nullptr),
+		m_rightClickMenu(nullptr),
 		m_windowSize{ 0.0f, 0.0f },
 		m_prevCursor{ 0, 0 } {}
 	void Application::Init(const std::wstring& name, int width, int height)
@@ -222,6 +299,7 @@ namespace cephimages
 		m_windowSize.height = static_cast<float>(height);
 
 		InitWindow();
+		CreateRightClickMenu();
 		InitDirect2D();
 		InitDirectWrite();
 
@@ -258,11 +336,18 @@ namespace cephimages
 		case WM_SIZE:
 			Resize(LOWORD(lparam), HIWORD(lparam));
 			return 0;
+		case WM_RBUTTONUP:
+			RightButtonUp(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+			return 0;
+		case WM_COMMAND:
+			Command(wparam);
+			return 0;
 		case WM_MOUSEMOVE:
-			MouseMove(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), wparam & (MK_LBUTTON | MK_RBUTTON));
+			MouseMove(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), wparam & MK_LBUTTON);
 			return 0;
 		case WM_MOUSEWHEEL:
 			MouseWheel(GET_WHEEL_DELTA_WPARAM(wparam));
+			return 0;
 		case WM_KEYDOWN:
 			KeyDown(wparam);
 			return 0;

@@ -10,6 +10,7 @@ namespace cephimages
 	class Application
 	{
 		HWND m_mainWindow;
+		HMENU m_rightClickMenu;
 		std::wstring m_windowName;
 		D2D1_SIZE_F m_windowSize;
 		D2D1_POINT_2L m_prevCursor;
@@ -27,6 +28,7 @@ namespace cephimages
 
 	private:
 		void InitWindow();
+		void CreateRightClickMenu();
 		void InitDirect2D();
 		void InitDirectWrite();
 
@@ -35,6 +37,8 @@ namespace cephimages
 		void CloseWindow();
 		void Resize(unsigned width, unsigned height);
 		void Paint();
+		void Command(WPARAM id);
+		void RightButtonUp(int x, int y);
 		void MouseMove(int x, int y, bool btnDown);
 		void MouseWheel(int delta);
 		void KeyDown(WPARAM wparam);
